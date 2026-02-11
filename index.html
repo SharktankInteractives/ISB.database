@@ -3,148 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISB CENTRAL COMMAND</title>
-    <style>
-        :root {
-            --isb-red: #cc0000;
-            --isb-warn: #ffcc00;
-            --isb-bg: #050505;
-            --isb-panel: #111;
-            --isb-border: #2a2a2a;
-            --text: #e0e0e0;
-        }
+    <title>ISB CENTRAL COMMAND | GLOBAL</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        body { background: var(--isb-bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3eKgmlJzc-0uvSbOPLeUIt7XosKyOmGw",
+            authDomain: "isb-command-portal.firebaseapp.com",
+            projectId: "isb-command-portal",
+            storageBucket: "isb-command-portal.firebasestorage.app",
+            messagingSenderId: "544653655549",
+            appId: "1:544653655549:web:e940243c55cf229f76ed94",
+            databaseURL: "https://isb-command-portal-default-rtdb.firebaseio.com/" // <--- PASTE YOUR URL HERE
+        };
 
-        /* ALERT BANNER */
-        #global-alert-banner {
-            position: fixed; top: 0; left: 300px; right: 0;
-            padding: 12px; text-align: center; font-weight: bold;
-            z-index: 2000; letter-spacing: 2px; text-transform: uppercase;
-            display: none; border-bottom: 2px solid rgba(255,255,255,0.2);
-        }
-        .alert-critical { background: var(--isb-red); color: white; animation: pulse 1s infinite; }
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        /* SIDEBAR */
-        #sidebar { width: 300px; background: var(--isb-panel); border-right: 1px solid var(--isb-border); display: flex; flex-direction: column; }
-        .header { padding: 30px 20px; border-bottom: 2px solid var(--isb-red); text-align: center; }
-        nav { flex-grow: 1; overflow-y: auto; }
-        nav button { width: 100%; background: none; border: none; color: #888; padding: 15px 25px; text-align: left; cursor: pointer; border-bottom: 1px solid #1a1a1a; transition: 0.2s; }
-        nav button:hover, nav button.active { background: #1a1a1a; color: #fff; border-left: 4px solid var(--isb-red); }
-
-        /* MAIN */
-        #main { flex-grow: 1; padding: 60px 40px 40px; overflow-y: auto; }
-        .page { display: none; max-width: 1000px; margin: 0 auto; }
-        .page.visible { display: block; }
-        .card { background: #0d0d0d; border: 1px solid var(--isb-border); padding: 25px; margin-bottom: 20px; border-radius: 4px; position: relative; }
-
-        input, select, textarea { width: 100%; background: #000; border: 1px solid var(--isb-border); color: #fff; padding: 12px; margin: 10px 0; box-sizing: border-box; }
-        .btn { background: var(--isb-red); color: white; border: none; padding: 12px 25px; cursor: pointer; font-weight: bold; }
-        .btn-dim { background: #222; color: #aaa; border: 1px solid #333; padding: 8px 12px; cursor: pointer; font-size: 0.75rem; margin-top: 5px; }
-        .btn-delete { background: #440000; color: #ff8888; border: 1px solid #660000; padding: 5px 10px; cursor: pointer; font-size: 0.7rem; position: absolute; top: 15px; right: 15px; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid var(--isb-border); padding: 12px; text-align: left; }
-        th { color: var(--isb-red); font-size: 0.75rem; text-transform: uppercase; background: #161616; }
-
-        .hidden { display: none !important; }
-    </style>
-</head>
-<body>
-
-    <div id="global-alert-banner"></div>
-
-    <div id="sidebar">
-        <div class="header">
-            <h1 style="margin:0; letter-spacing:3px; font-size:1.2rem;">ISB COMMAND</h1>
-            <small style="color:var(--isb-red)">SYSTEM RESTORED</small>
-        </div>
-        <nav id="nav-links">
-            <button onclick="router('public')" id="nav-public" class="active">Public Archives</button>
-            <button onclick="router('onsight')" id="nav-onsight">Onsight List</button>
-            <button onclick="router('blacklist')" id="nav-blacklist">Blacklist Tracker</button>
-            
-            <div id="secure-nav" class="hidden">
-                <button onclick="router('classified')">Classified Files</button>
-                <button onclick="router('ongoing')">Ongoing Cases</button>
-                <button onclick="router('personnel')">Personnel Records</button>
-                <button onclick="router('create')">Manage Files</button>
-                <button onclick="router('manage-users')" id="nav-super" class="hidden" style="color: var(--isb-warn);">Access Management</button>
-                <button onclick="router('logs')">System Logs</button>
-            </div>
-
-            <button onclick="router('login')" id="nav-login" style="margin-top:20px; color:var(--isb-red);">[ ACCESS TERMINAL ]</button>
-            <button onclick="terminateSession()" id="nav-logout" class="hidden" style="color: #666;">TERMINATE SESSION</button>
-        </nav>
-    </div>
-
-    <div id="main">
-        <div id="page-login" class="page">
-            <div class="card" style="max-width: 400px; margin: 50px auto;">
-                <h3 style="text-align:center;">CREDENTIAL VERIFICATION</h3>
-                <input type="text" id="user-in" placeholder="ID">
-                <input type="password" id="pass-in" placeholder="CODE">
-                <button class="btn" style="width:100%" onclick="login()">INITIALIZE</button>
-            </div>
-        </div>
-
-        <div id="page-blacklist" class="page">
-            <h2>BLACKLIST TRACKER</h2>
-            <div id="blacklist-admin" class="card hidden">
-                <h4>ISSUE NEW BLACKLIST ENTRY</h4>
-                <input type="text" id="bl-name" placeholder="Username">
-                <input type="date" id="bl-expiry">
-                <input type="text" id="bl-type" placeholder="Violation Type">
-                <textarea id="bl-reason" placeholder="Reason"></textarea>
-                <button class="btn" onclick="addBlacklist()">ENFORCE</button>
-            </div>
-            <table><thead><tr><th>Subject</th><th>Violation</th><th>Reason</th><th>Expires</th></tr></thead><tbody id="bl-table"></tbody></table>
-        </div>
-
-        <div id="page-onsight" class="page">
-            <h2>ONSIGHT LIST (KOS/AOS)</h2>
-            <div id="onsight-admin" class="card hidden">
-                <h4>ISSUE ONSIGHT ORDER</h4>
-                <input type="text" id="os-user" placeholder="Target Username">
-                <select id="os-status"><option value="KOS">KOS (Kill on Sight)</option><option value="AOS">AOS (Arrest on Sight)</option></select>
-                <input type="text" id="os-reason" placeholder="Reason">
-                <input type="date" id="os-expiry">
-                <button class="btn" onclick="addOnsight()">AUTHORIZE</button>
-            </div>
-            <table><thead><tr><th>Subject</th><th>Status</th><th>Reason</th><th>Expires</th></tr></thead><tbody id="onsight-body"></tbody></table>
-        </div>
-
-        <div id="page-manage-users" class="page">
-            <h2>COMMAND CONTROL</h2>
-            <div class="card">
-                <h4 style="color: var(--isb-warn);">PROVISION NEW OPERATIVE</h4>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="new-u" placeholder="User">
-                    <input type="text" id="new-p" placeholder="Pass">
-                    <select id="new-r"><option value="Admin">Admin</option><option value="Overseer">Overseer</option><option value="Super Admin">Super Admin</option></select>
-                </div>
-                <button class="btn" onclick="createUser()">AUTHORIZE</button>
-            </div>
-            <div class="card">
-                <h4>GLOBAL BROADCAST (5m Duration)</h4>
-                <input type="text" id="alert-msg"><button class="btn" onclick="postAlert()">BROADCAST</button>
-            </div>
-            <div class="card">
-                <h4>ACTIVE PERSONNEL</h4>
-                <table><thead><tr><th>User</th><th>Rank</th><th>Action</th></tr></thead><tbody id="user-list"></tbody></table>
-            </div>
-        </div>
-
-        <div id="page-public" class="page visible"><h2>PUBLIC RECORDS</h2><div id="list-public"></div></div>
-        <div id="page-classified" class="page"><h2>CLASSIFIED</h2><div id="list-classified"></div></div>
-        <div id="page-ongoing" class="page"><h2>ACTIVE ONGOING CASES</h2><div id="list-ongoing"></div></div>
-        <div id="page-personnel" class="page"><h2>PERSONNEL</h2><div id="list-personnel"></div></div>
-        <div id="page-create" class="page"><h2>FILE MANAGEMENT</h2><div class="card"><input type="text" id="f-name" placeholder="File Name"><select id="f-cat"><option value="File">General File</option><option value="Operation">Operation</option><option value="Investigation">Investigation</option><option value="Personnel">Personnel</option></select><input type="text" id="f-sec" placeholder="Y / N / O" maxlength="1"><input type="text" id="f-dept" placeholder="Dept"><input type="text" id="f-off" placeholder="Officer"><textarea id="f-info" rows="6" placeholder="Details"></textarea><button class="btn" onclick="saveFile()">ARCHIVE</button></div></div>
-        <div id="page-logs" class="page"><h2>AUDIT TRAIL</h2><div id="list-logs" class="card"></div></div>
-    </div>
-
-    <script>
-        // --- ALL PREVIOUS ACCOUNTS RESTORED ---
+        // --- AUTH & STATE ---
+        let currentSession = null;
         const initialUsers = [
             { u: "ISBCentralAdmin", p: "J!kkl@sIntelligence", r: "Super Admin" },
             { u: "voidyaepIntel", p: "K!kkl@s2025", r: "Super Admin" },
@@ -155,105 +33,150 @@
             { u: "Lunar647", p: "Starfish55@", r: "Admin" }
         ];
 
-        let users = JSON.parse(localStorage.getItem('isb_users')) || initialUsers;
-        let files = JSON.parse(localStorage.getItem('isb_files')) || [];
-        let blacklist = JSON.parse(localStorage.getItem('isb_blacklist')) || [];
-        let onsight = JSON.parse(localStorage.getItem('isb_onsight')) || [];
-        let logs = JSON.parse(localStorage.getItem('isb_logs')) || [];
-        let currentSession = null;
+        // Sync Alert Banner
+        onValue(ref(db, 'global_alert'), (snapshot) => {
+            const active = snapshot.val();
+            const banner = document.getElementById('global-alert-banner');
+            if (active) {
+                const diff = Date.now() - active.created;
+                if (diff > 300000) { 
+                    remove(ref(db, 'global_alert'));
+                    banner.style.display = 'none';
+                } else {
+                    banner.innerText = `${active.msg} [${Math.ceil((300000-diff)/1000)}s]`;
+                    banner.style.display = 'block';
+                    banner.className = 'alert-critical';
+                }
+            } else { banner.style.display = 'none'; }
+        });
 
-        function login() {
-            const u = document.getElementById('user-in').value, p = document.getElementById('pass-in').value;
-            const user = users.find(x => x.u === u && x.p === p);
+        // Global Sync for Files/Logs/Users
+        onValue(ref(db, 'files'), (snap) => renderFiles(snap.val()));
+        onValue(ref(db, 'logs'), (snap) => renderLogs(snap.val()));
+        onValue(ref(db, 'blacklist'), (snap) => renderBlacklist(snap.val()));
+        onValue(ref(db, 'onsight'), (snap) => renderOnsight(snap.val()));
+
+        // --- FUNCTIONS ---
+        window.login = () => {
+            const u = document.getElementById('user-in').value;
+            const p = document.getElementById('pass-in').value;
+            const user = initialUsers.find(x => x.u === u && x.p === p);
             if (user) {
                 currentSession = user;
-                addLog(`LOGIN: ${user.u}`);
                 document.getElementById('secure-nav').classList.remove('hidden');
                 document.getElementById('nav-logout').classList.remove('hidden');
                 document.getElementById('nav-login').classList.add('hidden');
-                if (user.r !== 'Overseer') {
-                    document.getElementById('blacklist-admin').classList.remove('hidden');
-                    document.getElementById('onsight-admin').classList.remove('hidden');
-                }
                 if (user.r === 'Super Admin') document.getElementById('nav-super').classList.remove('hidden');
                 router('classified');
+                addLog(`LOGIN: ${user.u}`);
             } else { alert("ACCESS DENIED"); }
-        }
+        };
 
-        function terminateSession() { window.location.reload(); }
+        window.postAlert = () => {
+            const msg = document.getElementById('alert-msg').value;
+            set(ref(db, 'global_alert'), { msg, created: Date.now() });
+        };
 
-        // --- ACCOUNT MGMT ---
-        function createUser() {
-            const u = document.getElementById('new-u').value, p = document.getElementById('new-p').value, r = document.getElementById('new-r').value;
-            if (!u || !p) return;
-            users.push({ u, p, r });
-            localStorage.setItem('isb_users', JSON.stringify(users));
-            renderUserTable();
-        }
-        function renderUserTable() {
-            document.getElementById('user-list').innerHTML = users.map((u, i) => `<tr><td>${u.u}</td><td>${u.r}</td><td><button class="btn-dim" onclick="setRank(${i}, 'Admin')">Admin</button><button class="btn-dim" onclick="setRank(${i}, 'Public')" style="color:red">Revoke</button></td></tr>`).join('');
-        }
-        function setRank(i, r) { users[i].r = r; localStorage.setItem('isb_users', JSON.stringify(users)); renderUserTable(); }
+        window.saveFile = () => {
+            const f = {
+                name: document.getElementById('f-name').value,
+                sec: document.getElementById('f-sec').value.toUpperCase(),
+                dept: document.getElementById('f-dept').value,
+                info: document.getElementById('f-info').value,
+                timestamp: Date.now()
+            };
+            push(ref(db, 'files'), f);
+            router('public');
+        };
 
-        // --- BLACKLIST & ONSIGHT ---
-        function addBlacklist() {
-            blacklist.push({ name: document.getElementById('bl-name').value, expiry: document.getElementById('bl-expiry').value, type: document.getElementById('bl-type').value, reason: document.getElementById('bl-reason').value });
-            localStorage.setItem('isb_blacklist', JSON.stringify(blacklist)); renderBlacklist();
-        }
-        function renderBlacklist() {
-            document.getElementById('bl-table').innerHTML = blacklist.map(x => `<tr><td>${x.name}</td><td>${x.type}</td><td>${x.reason}</td><td>${x.expiry}</td></tr>`).join('');
-        }
-        function addOnsight() {
-            onsight.push({ user: document.getElementById('os-user').value, status: document.getElementById('os-status').value, reason: document.getElementById('os-reason').value, expiry: document.getElementById('os-expiry').value });
-            localStorage.setItem('isb_onsight', JSON.stringify(onsight)); renderOnsight();
-        }
-        function renderOnsight() {
-            document.getElementById('onsight-body').innerHTML = onsight.map(x => `<tr><td>${x.user}</td><td>${x.status}</td><td>${x.reason}</td><td>${x.expiry}</td></tr>`).join('');
-        }
+        window.addLog = (m) => {
+            push(ref(db, 'logs'), `[${new Date().toLocaleString()}] ${m}`);
+        };
 
-        // --- FILES & LOGS ---
-        function saveFile() {
-            const f = { name: document.getElementById('f-name').value, cat: document.getElementById('f-cat').value, sec: document.getElementById('f-sec').value.toUpperCase(), dept: document.getElementById('f-dept').value, off: document.getElementById('f-off').value, info: document.getElementById('f-info').value, id: Date.now() };
-            files.push(f); localStorage.setItem('isb_files', JSON.stringify(files)); router('public');
-        }
-        function deleteFile(id, name) {
-            files = files.filter(f => f.id !== id);
-            localStorage.setItem('isb_files', JSON.stringify(files));
-            addLog(`PURGE: [${name}] DELETED BY ${currentSession.u}`);
-            router(document.querySelector('.page.visible').id.replace('page-', ''));
-        }
-        function renderFiles(type) {
-            const container = document.getElementById('list-'+type); if(!container) return; container.innerHTML = "";
-            let data = files.filter(f => (type==='public' && f.sec==='N') || (type==='classified' && f.sec==='Y') || (type==='ongoing' && f.sec==='O') || (type==='personnel' && f.cat==='Personnel'));
-            data.forEach(f => {
-                const isAdmin = (currentSession && currentSession.r !== 'Overseer');
-                container.innerHTML += `<div class="card">${isAdmin ? `<button class="btn-delete" onclick="deleteFile(${f.id}, '${f.name}')">PURGE</button>` : ''}<h3 style="color:var(--isb-red)">${f.name}</h3><small>${f.dept} | Status: ${f.sec}</small><p>${f.info}</p></div>`;
-            });
-        }
-        function addLog(m) { logs.unshift(`[${new Date().toLocaleString()}] ${m}`); localStorage.setItem('isb_logs', JSON.stringify(logs)); }
-        function renderLogs() { document.getElementById('list-logs').innerHTML = logs.map(l => `<div style="border-bottom:1px solid #222; padding:5px; font-size:0.8rem">${l}</div>`).join(''); }
+        window.deleteFile = (id, name) => {
+            if(confirm(`Purge ${name}?`)) {
+                remove(ref(db, `files/${id}`));
+                addLog(`PURGE: ${name} deleted by ${currentSession.u}`);
+            }
+        };
 
-        // --- ALERTS ---
-        function postAlert() { localStorage.setItem('isb_global_alert', JSON.stringify({msg:document.getElementById('alert-msg').value, created: Date.now()})); applyAlert(); }
-        function applyAlert() { 
-            const banner = document.getElementById('global-alert-banner'), active = JSON.parse(localStorage.getItem('isb_global_alert')); 
-            if (active) {
-                const diff = Date.now() - active.created;
-                if (diff > 300000) { localStorage.removeItem('isb_global_alert'); banner.style.display = 'none'; }
-                else { banner.className = 'alert-critical'; banner.innerText = `${active.msg} [${Math.ceil((300000-diff)/1000)}s]`; banner.style.display = 'block'; }
-            } else { banner.style.display = 'none'; }
-        }
-
-        function router(id) {
+        // ... Helper UI functions ...
+        window.router = (id) => {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('visible'));
             document.getElementById('page-'+id).classList.add('visible');
-            if(id === 'logs') renderLogs();
-            if(id === 'manage-users') renderUserTable();
-            if(id === 'blacklist') renderBlacklist();
-            if(id === 'onsight') renderOnsight();
-            if(['public','classified','ongoing','personnel'].includes(id)) renderFiles(id);
-        }
-        setInterval(applyAlert, 1000); applyAlert(); renderBlacklist(); renderOnsight();
+        };
+        
+        window.terminateSession = () => window.location.reload();
+
     </script>
+    <style>
+        :root { --isb-red: #cc0000; --isb-bg: #050505; --text: #e0e0e0; }
+        body { background: var(--isb-bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; }
+        #global-alert-banner { position: fixed; top: 0; left: 300px; right: 0; padding: 12px; text-align: center; background: var(--isb-red); font-weight: bold; display: none; z-index: 1000; }
+        #sidebar { width: 300px; background: #111; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; }
+        nav button { width: 100%; background: none; border: none; color: #888; padding: 15px; text-align: left; cursor: pointer; border-bottom: 1px solid #1a1a1a; }
+        .page { display: none; padding: 60px; flex-grow: 1; overflow-y: auto; }
+        .visible { display: block; }
+        .hidden { display: none !important; }
+        .card { background: #0d0d0d; border: 1px solid #2a2a2a; padding: 20px; margin-bottom: 15px; position: relative; }
+        input, textarea, select { width: 100%; background: #000; color: #fff; border: 1px solid #2a2a2a; padding: 10px; margin: 5px 0; }
+        .btn { background: var(--isb-red); color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="global-alert-banner"></div>
+    <div id="sidebar">
+        <div style="padding: 20px; border-bottom: 2px solid var(--isb-red); text-align: center;">
+            <h2 style="margin:0">ISB COMMAND</h2>
+            <small style="color:red">GLOBAL SYNC ACTIVE</small>
+        </div>
+        <nav>
+            <button onclick="router('public')">Public Archives</button>
+            <button onclick="router('onsight')">Onsight List</button>
+            <button onclick="router('blacklist')">Blacklist Tracker</button>
+            <div id="secure-nav" class="hidden">
+                <button onclick="router('classified')">Classified Files</button>
+                <button onclick="router('ongoing')">Ongoing Cases</button>
+                <button onclick="router('create')">Manage Files</button>
+                <button id="nav-super" class="hidden" onclick="router('manage-users')">Access Management</button>
+                <button onclick="router('logs')">System Logs</button>
+            </div>
+            <button id="nav-login" onclick="router('login')" style="color:red">LOGIN</button>
+            <button id="nav-logout" class="hidden" onclick="terminateSession()">LOGOUT</button>
+        </nav>
+    </div>
+
+    <div id="main">
+        <div id="page-login" class="page">
+            <div class="card" style="max-width:400px; margin:auto;">
+                <h3>SECURE LOGIN</h3>
+                <input type="text" id="user-in" placeholder="Operative ID">
+                <input type="password" id="pass-in" placeholder="Security Code">
+                <button class="btn" onclick="login()">INITIALIZE</button>
+            </div>
+        </div>
+        <div id="page-public" class="page"><h2>PUBLIC</h2><div id="list-public"></div></div>
+        <div id="page-classified" class="page"><h2>CLASSIFIED</h2><div id="list-classified"></div></div>
+        <div id="page-ongoing" class="page"><h2>ONGOING</h2><div id="list-ongoing"></div></div>
+        <div id="page-create" class="page">
+            <h2>NEW FILE</h2>
+            <div class="card">
+                <input id="f-name" placeholder="Name">
+                <input id="f-sec" placeholder="Status (Y/N/O)">
+                <input id="f-dept" placeholder="Dept">
+                <textarea id="f-info" placeholder="Data"></textarea>
+                <button class="btn" onclick="saveFile()">UPLOAD</button>
+            </div>
+        </div>
+        <div id="page-manage-users" class="page">
+            <h2>ACCESS MANAGEMENT</h2>
+            <div class="card">
+                <h4>ISSUE ALERT</h4>
+                <input id="alert-msg">
+                <button class="btn" onclick="postAlert()">BROADCAST</button>
+            </div>
+        </div>
+        <div id="page-logs" class="page"><h2>AUDIT TRAIL</h2><div id="list-logs"></div></div>
+    </div>
 </body>
 </html>
