@@ -22,7 +22,7 @@
             width: 14px; 
             height: 14px; 
             border-radius: 50%;
-            background: #440000; /* Dark Red when offline */
+            background: #440000; 
             border: 2px solid rgba(255,255,255,0.3);
             transition: 0.5s; 
             z-index: 9999;
@@ -176,7 +176,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- AUTH ---
         const initialUsers = [
             { u: "ISBCentralAdmin", p: "J!kkl@sIntelligence", r: "Super Admin" },
             { u: "voidyaepIntel", p: "K!kkl@s2025", r: "Super Admin" },
@@ -189,17 +188,12 @@
         let cloudUsers = [];
         let currentSession = null;
 
-        // --- CONNECTION MONITOR ---
         const statusLight = document.getElementById('sync-status');
         onValue(ref(db, '.info/connected'), (snap) => {
-            if (snap.val() === true) {
-                statusLight.classList.add('sync-online');
-            } else {
-                statusLight.classList.remove('sync-online');
-            }
+            if (snap.val() === true) statusLight.classList.add('sync-online');
+            else statusLight.classList.remove('sync-online');
         });
 
-        // --- LISTENERS ---
         onValue(ref(db, 'global_alert'), (snap) => {
             const active = snap.val();
             const banner = document.getElementById('global-alert-banner');
@@ -223,7 +217,8 @@
         });
 
         onValue(ref(db, 'users'), (snap) => { 
-            cloudUsers = snap.val() ? Object.keys(snap.val()).map(k => ({...snap.val()[k], id: k})) : [];
+            const data = snap.val() || {};
+            cloudUsers = Object.keys(data).map(k => ({...data[k], id: k}));
             window.renderUserTable();
         });
 
@@ -232,7 +227,6 @@
             document.getElementById('list-logs').innerHTML = Object.values(l).reverse().map(log => `<div style="border-bottom:1px solid #222; padding:5px; font-size:0.8rem">${log}</div>`).join('');
         });
 
-        // --- GLOBAL FUNCTIONS ---
         window.login = () => {
             const u = document.getElementById('user-in').value, p = document.getElementById('pass-in').value;
             const user = [...initialUsers, ...cloudUsers].find(x => x.u === u && x.p === p);
@@ -248,6 +242,7 @@
                 }
                 if (user.r === 'Super Admin') document.getElementById('nav-super').classList.remove('hidden');
                 window.router('classified');
+                window.renderUserTable(); 
             } else alert("ACCESS DENIED");
         };
 
@@ -275,12 +270,26 @@
 
         window.createUser = () => {
             const u = document.getElementById('new-u').value, p = document.getElementById('new-p').value, r = document.getElementById('new-r').value;
-            if (u && p) push(ref(db, 'users'), {u, p, r});
+            if (u && p) {
+                push(ref(db, 'users'), {u, p, r});
+                window.addLog(`USER CREATED: ${u} RANK: ${r}`);
+                document.getElementById('new-u').value = "";
+                document.getElementById('new-p').value = "";
+            }
         };
 
         window.renderUserTable = () => {
-            const all = [...initialUsers, ...cloudUsers];
-            document.getElementById('user-list').innerHTML = all.map(u => `<tr><td>${u.u}</td><td>${u.r}</td><td>${u.id ? `<button class="btn-dim" style="color:red" onclick="deleteEntry('users', '${u.id}')">Revoke</button>` : '<small>Master</small>'}</td></tr>`).join('');
+            const list = document.getElementById('user-list');
+            if (!list) return;
+            let html = "";
+            initialUsers.forEach(u => {
+                html += `<tr><td>${u.u}</td><td>${u.r}</td><td><small style="color:#444">MASTER</small></td></tr>`;
+            });
+            cloudUsers.forEach(u => {
+                const canRevoke = currentSession && currentSession.r === 'Super Admin';
+                html += `<tr><td>${u.u}</td><td>${u.r}</td><td>${canRevoke ? `<button class="btn-dim" style="color:var(--isb-red)" onclick="deleteEntry('users', '${u.id}', '${u.u}')">REVOKE</button>` : '<small>ACTIVE</small>'}</td></tr>`;
+            });
+            list.innerHTML = html;
         };
 
         window.router = (id) => {
@@ -292,12 +301,14 @@
 
         window.addBlacklist = () => push(ref(db, 'blacklist'), { name: document.getElementById('bl-name').value, expiry: document.getElementById('bl-expiry').value, type: document.getElementById('bl-type').value, reason: document.getElementById('bl-reason').value });
         window.addOnsight = () => push(ref(db, 'onsight'), { user: document.getElementById('os-user').value, status: document.getElementById('os-status').value, reason: document.getElementById('os-reason').value, expiry: document.getElementById('os-expiry').value });
-        window.postAlert = () => set(ref(db, 'global_alert'), { msg: document.getElementById('alert-msg').value, created: Date.now() });
+        window.postAlert = () => {
+            const msg = document.getElementById('alert-msg').value;
+            if(msg) set(ref(db, 'global_alert'), { msg: msg, created: Date.now() });
+        };
         window.addLog = (m) => push(ref(db, 'logs'), `[${new Date().toLocaleString()}] ${m}`);
-        window.deleteEntry = (path, id, name) => confirm(`Purge ${name || 'entry'}?`) && remove(ref(db, `${path}/${id}`));
+        window.deleteEntry = (path, id, name) => confirm(`PURGE ${name || 'ENTRY'}?`) && remove(ref(db, `${path}/${id}`));
         window.terminateSession = () => window.location.reload();
 
-        // Initialize view
         window.router('public');
     </script>
 </body></html>
