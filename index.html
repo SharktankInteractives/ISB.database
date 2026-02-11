@@ -14,13 +14,23 @@
 
         body { background: var(--isb-bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        /* SYNC STATUS LIGHT */
+        /* ENHANCED SYNC STATUS LIGHT */
         #sync-status {
-            position: fixed; bottom: 10px; right: 10px;
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #333; transition: 0.3s; z-index: 3000;
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px;
+            width: 14px; 
+            height: 14px; 
+            border-radius: 50%;
+            background: #440000; /* Dark Red when offline */
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: 0.5s; 
+            z-index: 9999;
         }
-        .sync-online { background: #00ff00 !important; box-shadow: 0 0 8px #00ff00; }
+        .sync-online { 
+            background: #00ff00 !important; 
+            box-shadow: 0 0 15px #00ff00, 0 0 5px #fff; 
+        }
 
         /* ALERT BANNER */
         #global-alert-banner {
@@ -132,7 +142,7 @@
                 <button class="btn" onclick="createUser()">AUTHORIZE</button>
             </div>
             <div class="card">
-                <h4>GLOBAL BROADCAST (5m Duration)</h4>
+                <h4>GLOBAL BROADCAST</h4>
                 <input type="text" id="alert-msg"><button class="btn" onclick="postAlert()">BROADCAST</button>
             </div>
             <div class="card">
@@ -179,11 +189,14 @@
         let cloudUsers = [];
         let currentSession = null;
 
-        // --- CONNECTION STATUS ---
+        // --- CONNECTION MONITOR ---
         const statusLight = document.getElementById('sync-status');
         onValue(ref(db, '.info/connected'), (snap) => {
-            if (snap.val() === true) statusLight.classList.add('sync-online');
-            else statusLight.classList.remove('sync-online');
+            if (snap.val() === true) {
+                statusLight.classList.add('sync-online');
+            } else {
+                statusLight.classList.remove('sync-online');
+            }
         });
 
         // --- LISTENERS ---
@@ -198,24 +211,28 @@
         });
 
         onValue(ref(db, 'files'), (snap) => { window.renderFilesAll(snap.val() || {}); });
+        
         onValue(ref(db, 'blacklist'), (snap) => { 
             const d = snap.val() || {};
             document.getElementById('bl-table').innerHTML = Object.keys(d).map(k => `<tr><td>${d[k].name}</td><td>${d[k].type}</td><td>${d[k].reason}</td><td>${d[k].expiry}</td><td>${currentSession && currentSession.r !== 'Overseer' ? `<button class="btn-dim" style="color:red" onclick="deleteEntry('blacklist', '${k}')">X</button>` : ''}</td></tr>`).join('');
         });
+
         onValue(ref(db, 'onsight'), (snap) => {
             const d = snap.val() || {};
             document.getElementById('onsight-body').innerHTML = Object.keys(d).map(k => `<tr><td>${d[k].user}</td><td>${d[k].status}</td><td>${d[k].reason}</td><td>${d[k].expiry}</td><td>${currentSession && currentSession.r !== 'Overseer' ? `<button class="btn-dim" style="color:red" onclick="deleteEntry('onsight', '${k}')">X</button>` : ''}</td></tr>`).join('');
         });
+
         onValue(ref(db, 'users'), (snap) => { 
             cloudUsers = snap.val() ? Object.keys(snap.val()).map(k => ({...snap.val()[k], id: k})) : [];
             window.renderUserTable();
         });
+
         onValue(ref(db, 'logs'), (snap) => {
             const l = snap.val() || {};
             document.getElementById('list-logs').innerHTML = Object.values(l).reverse().map(log => `<div style="border-bottom:1px solid #222; padding:5px; font-size:0.8rem">${log}</div>`).join('');
         });
 
-        // --- GLOBAL WINDOW FUNCTIONS ---
+        // --- GLOBAL FUNCTIONS ---
         window.login = () => {
             const u = document.getElementById('user-in').value, p = document.getElementById('pass-in').value;
             const user = [...initialUsers, ...cloudUsers].find(x => x.u === u && x.p === p);
@@ -280,5 +297,7 @@
         window.deleteEntry = (path, id, name) => confirm(`Purge ${name || 'entry'}?`) && remove(ref(db, `${path}/${id}`));
         window.terminateSession = () => window.location.reload();
 
+        // Initialize view
+        window.router('public');
     </script>
 </body></html>
