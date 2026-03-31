@@ -63,7 +63,7 @@
     <div id="sidebar">
         <div class="header">
             <h1 style="margin:0; letter-spacing:3px; font-size:1.2rem;">ISB COMMAND</h1>
-            <small style="color:var(--isb-red)">CORE DATA RESTORED</small>
+            <small style="color:var(--isb-red)">PUBLIC TERMINAL</small>
         </div>
         <nav id="nav-links">
             <button onclick="router('public')" id="nav-public" class="active">Public Archives</button>
@@ -140,7 +140,7 @@
         <div id="page-classified" class="page"><h2>CLASSIFIED</h2><div id="list-classified"></div></div>
         <div id="page-ongoing" class="page"><h2>ONGOING CASES</h2><div id="list-ongoing"></div></div>
         <div id="page-onsight" class="page"><h2>ONSIGHT LIST</h2><div id="os-admin" class="card hidden"><input type="text" id="os-user" placeholder="Target"><select id="os-status"><option value="KOS">KOS</option><option value="AOS">AOS</option></select><input type="text" id="os-reason" placeholder="Reason"><input type="date" id="os-expiry"><button class="btn" onclick="addOnsight()">AUTHORIZE</button></div><table><thead><tr><th>Subject</th><th>Status</th><th>Reason</th><th>Expires</th><th>Action</th></tr></thead><tbody id="onsight-body"></tbody></table></div>
-        <div id="page-blacklist" class="page"><h2>BLACKLIST TRACKER</h2><div id="bl-admin" class="card hidden"><input type="text" id="bl-name" placeholder="User"><input type="date" id="bl-expiry"><input type="text" id="bl-type" placeholder="Violation"><textarea id="bl-reason"></textarea><button class="btn" onclick="addBlacklist()">ENFORCE</button></div><table><thead><tr><th>Subject</th><th>Violation</th><th>Reason</th><th>Expires</th><th>Action</th></tr></thead><tbody id="bl-table"></tbody></table></div>
+        <div id="page-blacklist" class="page"><h2>BLACKLIST TRACKER</h2><div id="bl-admin" class="card hidden"><input type="text" id="bl-name" placeholder="User"><input type="text" id="type" placeholder="Type of BL"><input type="date" id="bl-expiry"><input type="text" id="bl-type" placeholder="Violation"><textarea id="bl-reason"></textarea><button class="btn" onclick="addBlacklist()">ENFORCE</button></div><table><thead><tr><th>Subject</th><th>Violation</th><th>Reason</th><th>Expires</th><th>Action</th></tr></thead><tbody id="bl-table"></tbody></table></div>
         <div id="page-create" class="page"><h2>FILE MANAGEMENT</h2><div class="card"><input type="text" id="f-name" placeholder="File Name"><select id="f-cat"><option value="File">General</option><option value="Personnel">Personnel</option></select><input type="text" id="f-sec" placeholder="Y/N/O"><textarea id="f-info"></textarea><button class="btn" onclick="saveFile()">ARCHIVE</button></div></div>
     </div>
 
@@ -164,12 +164,7 @@
         // INITIAL OPERATIVES (Hardcoded Persistence)
         const initialUsers = [
             { u: "ISBCentralAdmin", p: "J!kkl@sIntelligence", r: "Super Admin" },
-            { u: "voidyaepIntel", p: "K!kkl@s2025", r: "Super Admin" },
-            { u: "PalpatineIsCool123", p: "AC^MZ*u]+?uNnoA%~6Y~", r: "Overseer" },
-            { u: "Cry0x532", p: "ISB509126", r: "Admin" },
-            { u: "Lycrosis", p: "ZAQ!2wsx", r: "Admin" },
-            { u: "SANaboo", p: "NabooIsTheCoolestPlanet", r: "Admin" },
-            { u: "Lunar647", p: "Starfish55@", r: "Admin" }
+           
         ];
 
         let cloudUsers = [];
